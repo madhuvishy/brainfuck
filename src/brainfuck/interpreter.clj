@@ -12,6 +12,12 @@
 
 (def output-vector (atom []))
 
+(defn sparse-state
+  [state pointer]
+  (if (<  (count state) (inc pointer)) 
+    (assoc state pointer 0)
+    state))
+
 (defn inc-pointer
   "Increments pointer by 1"
   [{pointer :pointer :as data}]
@@ -25,12 +31,14 @@
 (defn inc-byte
   "Increment byte by 1"
   [{state :state pointer :pointer :as data}]
-  (assoc data :state (assoc state pointer (inc (nth state pointer)))))
+  (let [state (sparse-state state pointer)]
+    (assoc data :state (assoc state pointer (inc (nth state pointer))))))
 
 (defn dec-byte
   "Decrement byte by 1"
   [{state :state pointer :pointer :as data}]
-  (assoc data :state (assoc state pointer (dec (nth state pointer)))))
+  (let [state (sparse-state state pointer)]
+    (assoc data :state (assoc state pointer (dec (nth state pointer))))))
 
 (defn output-byte
   "Print byte at pointer to console"
@@ -67,7 +75,7 @@
 (defn interpret
   "Interpret source tokens"
   [token-list]
-  (loop [prog-data {:state (vec (repeat 15 0)) :pointer 0 :stack [] :token-counter 0}]
+  (loop [prog-data {:state [] :pointer 0 :stack [] :token-counter 0}]
     (let [token-counter (:token-counter prog-data)]
       (if (= (inc token-counter) (count token-list)) 
         (apply str @output-vector) 
