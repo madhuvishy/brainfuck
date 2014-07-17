@@ -13,6 +13,7 @@
 (def output-vector (atom []))
 
 (defn sparse-state
+  "If there is no value at pointer insert 0 at pointer location and return new state vector"
   [state pointer]
   (if (<  (count state) (inc pointer)) 
     (assoc state pointer 0)
@@ -75,8 +76,10 @@
 (defn interpret
   "Interpret source tokens"
   [token-list]
+
   (loop [prog-data {:state [] :pointer 0 :stack [] :token-counter 0}]
     (let [token-counter (:token-counter prog-data)]
+      
       (if (= (inc token-counter) (count token-list)) 
         (apply str @output-vector) 
         (recur ((ns-resolve 'brainfuck.interpreter (symbol (nth token-list token-counter))) 
@@ -85,4 +88,6 @@
 (defn execute
   "Given source code string interpret and print results"
   [sourcestring]
-  (interpret (parse (seq sourcestring))))
+  (do
+    (reset! output-vector [])
+    (interpret (parse (seq sourcestring)))))
