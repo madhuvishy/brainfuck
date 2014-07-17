@@ -10,9 +10,7 @@
    \[ "jump-forward" 
    \] "jump-backward"})
 
-(def source1 "++++++++[>++++[>++>+++>+++>+<<<<-]
-             >+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.
-             +++.------.--------.>>+.>++.")
+(def output-vector (atom []))
 
 (defn inc-pointer
   "Increments pointer by 1"
@@ -38,7 +36,8 @@
   "Print byte at pointer to console"
   [{state :state pointer :pointer :as data}]
   (do
-    (print (char (nth state pointer)))
+    (swap! output-vector (fn [output] (conj output (char (nth state pointer)))))
+    #_(print (char (nth state pointer)))
     data))
 
 (defn input-byte
@@ -67,13 +66,15 @@
 
 (defn interpret
   "Interpret source tokens"
-  [tokens]
+  [token-list]
   (loop [prog-data {:state (vec (repeat 15 0)) :pointer 0 :stack [] :token-counter 0}]
     (let [token-counter (:token-counter prog-data)]
-      (if (= token-counter (count tokens)) 
-        prog-data 
-        (recur ((resolve (symbol (nth tokens token-counter))) 
+      (if (= (inc token-counter) (count token-list)) 
+        (apply str @output-vector) 
+        (recur ((ns-resolve 'brainfuck.interpreter (symbol (nth token-list token-counter))) 
                     (assoc prog-data :token-counter (inc token-counter))))))))
 
-
-(interpret (parse (seq source1)))
+(defn execute
+  "Given source code string interpret and print results"
+  [sourcestring]
+  (interpret (parse (seq sourcestring))))
