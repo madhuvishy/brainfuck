@@ -19,6 +19,12 @@
     (assoc state pointer 0)
     state))
 
+(defn ascii 
+  "Return the appropriate number/character for an input string"
+  [str]
+  (try  (Integer/parseInt str)  
+        (catch NumberFormatException e (int (first (seq str))))))
+
 (defn inc-pointer
   "Increments pointer by 1"
   [{pointer :pointer :as data}]
@@ -46,13 +52,14 @@
   [{state :state pointer :pointer :as data}]
   (do
     (swap! output-vector (fn [output] (conj output (char (nth state pointer)))))
-    #_(print (char (nth state pointer)))
     data))
 
 (defn input-byte
   "Set byte at pointer to user input"
   [{state :state pointer :pointer :as data}]
-  (assoc data :state (assoc state pointer (read-line))))
+  (let [read-value (read-line)]
+    (print (ascii read-value))
+    (assoc data :state (assoc state pointer (ascii read-value)))))
 
 (defn jump-forward
   "Go to next instruction if data at pointer is not 0 else jump to closest ]"
@@ -76,14 +83,13 @@
 (defn interpret
   "Interpret source tokens"
   [token-list]
-
   (loop [prog-data {:state [] :pointer 0 :stack [] :token-counter 0}]
-    (let [token-counter (:token-counter prog-data)]
-      
+    (let [{:keys [state pointer stack token-counter]} prog-data]
       (if (= (inc token-counter) (count token-list)) 
         (apply str @output-vector) 
         (recur ((ns-resolve 'brainfuck.interpreter (symbol (nth token-list token-counter))) 
-                    (assoc prog-data :token-counter (inc token-counter))))))))
+                    (assoc prog-data :state (sparse-state state pointer) 
+                                     :token-counter (inc token-counter))))))))
 
 (defn execute
   "Given source code string interpret and print results"
